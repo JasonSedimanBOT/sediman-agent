@@ -22,14 +22,6 @@ Teach it once. It repeats forever. 24/7.
 
 ## Install
 
-### Quick install (recommended)
-
-```bash
-curl -fsSL https://get.sediman.ai | bash
-```
-
-The installer uses `uv` to install directly from GitHub — no PyPI needed.
-
 ### From GitHub
 
 ```bash
