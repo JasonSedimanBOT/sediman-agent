@@ -8,20 +8,20 @@ Teach it once. It repeats forever. 24/7.
 
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-green.svg)]()
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/sediman)
+[![Discord](https://img.shields.io/discord/1376637192334123070?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/yFbZ58eJ)
 
 </div>
 
 ---
 
-![Sediman Demo](demo.gif)
+<img width="1246" height="854" alt="Screenshot 2026-05-30 at 4 25 03 AM" src="https://github.com/user-attachments/assets/5ff49600-0002-42c5-b307-9ba4b0a1afef" />
 
 ---
 
 ## Install
 
 ```bash
-curl -fsSL https://get.sediman.ai | bash
+
 ```
 
 <details>
@@ -49,6 +49,7 @@ sediman chat          # interactive CLI
 
 ```bash
 bun run tui --provider openai --model gpt-4o
+OPENAI_API_KEY=sk-... bun run tui --provider openai --model gpt-4o
 ```
 
 | Command | Description |
@@ -87,60 +88,10 @@ bun run tui --provider openai --model gpt-4o
 
 ---
 
-<details>
-<summary><strong>Architecture</strong></summary>
-
-```mermaid
-flowchart TB
-    subgraph Entry["Entry Points"]
-        CLI([sediman CLI])
-        API([FastAPI Server])
-        TUI([Rust TUI])
-    end
-
-    subgraph AgentCore["Agent Core"]
-        Loop([Think-Act-Observe-Reflect Loop])
-        Manager([Manager Agent])
-        Delegate([Parallel Subagents])
-    end
-
-    subgraph Skills["Skills System"]
-        Engine([CRUD + Versioning])
-        Executor([Auto-Healing Execution])
-        Hub([Community Hub])
-    end
-
-    subgraph Mem["Memory"]
-        Store([Dual-File Bounded Storage])
-        Embeddings([Vector Search])
-        Sessions([SQLite FTS5])
-    end
-
-    subgraph Browser["Browser"]
-        Session([Persistent Chromium])
-        Stealth([CloakBrowser Anti-Detect])
-    end
-
-    Entry --> Loop
-    Loop --> Manager --> Delegate
-    Loop --> Skills
-    Loop --> Mem
-    Loop --> Browser
-```
-
-</details>
-
----
-
-## Sediman Cloud
-
-Managed hosting — instant browser sessions, always-on automation, no infrastructure. [Join the waitlist](https://sediman.ai).
-
----
 
 ## License
 
-[Business Source License 1.1](LICENSE).
+[LICENSE](LICENSE).
 
 ---
 
@@ -148,6 +99,6 @@ Managed hosting — instant browser sessions, always-on automation, no infrastru
 
 **If this project helps you, consider giving it a star.**
 
-[Report Bug](https://github.com/sediman-agent/sediman-browse/issues) · [Request Feature](https://github.com/sediman-agent/sediman-browse/issues) · [Discord](https://discord.gg/sediman)
+[Report Bug](https://github.com/sediman/sediman/issues) · [Request Feature](https://github.com/sediman/sediman/issues) · [Join Discord](https://discord.gg/yFbZ58eJ)
 
 </div>
