@@ -221,11 +221,81 @@ class ToolRegistry:
 
 
 class ToolLoop:
-    def __init__(self, llm: LLMProvider, registry: ToolRegistry, max_rounds: int = 30, budget: Any = None):
+    def __init__(self, llm: LLMProvider, registry: ToolRegistry, max_rounds: int = 30, budget: Any = None, max_context_tokens: int = 16000):
         self.llm = llm
         self.registry = registry
         self.max_rounds = max_rounds
         self._budget = budget
+        self._max_context_tokens = max_context_tokens
+
+    def _estimate_tokens(self, messages: list[dict[str, Any]]) -> int:
+        total = 0
+        for m in messages:
+            content = str(m.get("content", ""))
+            tool_calls = m.get("tool_calls", [])
+            total += len(content) // 3
+            for tc in tool_calls:
+                args_str = str(tc.get("function", {}).get("arguments", ""))
+                total += len(args_str) // 3
+        return max(total, 1)
+
+    def _compress_tool_results(self, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        compressed = []
+        for m in messages:
+            if m.get("role") == "tool":
+                content = str(m.get("content", ""))
+                if len(content) > 2000:
+                    compressed.append({
+                        **m,
+                        "content": content[:2000] + f"\n... ({len(content) - 2000} more chars truncated)",
+                    })
+                else:
+                    compressed.append(m)
+            else:
+                compressed.append(m)
+        return compressed
+
+    def _maybe_compress(self, messages: list[dict[str, Any]], system_len: int = 0) -> list[dict[str, Any]]:
+        current_tokens = self._estimate_tokens(messages) + system_len
+        if current_tokens <= self._max_context_tokens:
+            return messages
+
+        logger.info(
+            "tool_loop_compressing",
+            current_tokens=current_tokens,
+            max_tokens=self._max_context_tokens,
+            message_count=len(messages),
+        )
+
+        compressed = self._compress_tool_results(messages)
+        new_tokens = self._estimate_tokens(compressed) + system_len
+        if new_tokens > self._max_context_tokens:
+            early = []
+            recent_count = 0
+            for m in reversed(compressed):
+                if m.get("role") == "tool":
+                    recent_count += 1
+                early.insert(0, m)
+                if recent_count >= 6 and m.get("role") == "user":
+                    break
+            remaining = [m for m in compressed if m not in early]
+            if remaining and len(early) < len(compressed):
+                early.insert(0, {
+                    "role": "system",
+                    "content": (
+                        f"[{len(remaining)} earlier messages were truncated to "
+                        f"conserve context. Key results from those rounds are "
+                        f"preserved in the most recent messages below.]"
+                    ),
+                })
+            compressed = early
+
+        logger.info(
+            "tool_loop_compressed",
+            new_tokens=self._estimate_tokens(compressed) + system_len,
+            new_count=len(compressed),
+        )
+        return compressed
 
     async def run(
         self,
@@ -241,6 +311,7 @@ class ToolLoop:
         all_messages.extend(messages)
 
         response: LLMResponse | None = None
+        system_tokens = len(system or "") // 3
         for _round in range(self.max_rounds):
             if self._budget is not None:
                 exhausted, reason = self._budget.is_exhausted()
@@ -249,6 +320,8 @@ class ToolLoop:
                     break
 
             InterruptSignal.get().check()
+
+            all_messages = self._maybe_compress(all_messages, system_tokens)
 
             response = await self.llm.chat(
                 messages=all_messages,
@@ -330,6 +403,7 @@ class ToolLoop:
         all_messages.extend(messages)
 
         response: LLMResponse | None = None
+        system_tokens = len(system or "") // 3
         for _round in range(self.max_rounds):
             if self._budget is not None:
                 exhausted, reason = self._budget.is_exhausted()
@@ -338,6 +412,8 @@ class ToolLoop:
                     break
 
             InterruptSignal.get().check()
+
+            all_messages = self._maybe_compress(all_messages, system_tokens)
 
             response = await self.llm.chat_stream_with_tools(
                 messages=all_messages,

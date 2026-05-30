@@ -49,3 +49,30 @@ class PlanStep:
     files_to_edit: list[str] = field(default_factory=list)
     commands_to_run: list[str] = field(default_factory=list)
     verification: str = ""
+
+
+@dataclass
+class HookContext:
+    tool_name: str
+    tool_input: dict[str, Any] = field(default_factory=dict)
+    session_id: str = ""
+    agent_name: str = "coding_agent"
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class MonitorEvent:
+    line: str
+    stream: str
+    timestamp: float = 0.0
+
+
+@dataclass
+class MonitorResult:
+    exit_code: int | None = None
+    output: str = ""
+    events: list[MonitorEvent] = field(default_factory=list)
+    timed_out: bool = False
+    stopped_by_pattern: bool = False
+    matched_pattern: str = ""
+    elapsed: float = 0.0

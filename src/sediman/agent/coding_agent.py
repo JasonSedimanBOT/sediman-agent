@@ -8,10 +8,19 @@ from sediman.agent.coding_agent import (
     ProjectInfo,
     VerifyResult,
     PlanStep,
+    InlineVerifier,
     VerifyLoop,
+    HookPipeline,
+    HookContext,
+    PreHookResult,
+    PostHookResult,
+    create_default_pipeline,
     discover_project,
     build_system_prompt,
     build_classification_prompt,
+    run_monitor,
+    MonitorResult,
+    MonitorEvent,
 )
 
 CodingSubagent = CodingAgent
