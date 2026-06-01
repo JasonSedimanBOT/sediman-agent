@@ -166,7 +166,7 @@ download_tui_binary() {
     fi
 
     local latest_tag
-    latest_tag="$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed -E 's/.*"tag_name":\s*"([^"]+)".*/\1/' || true)"
+    latest_tag="$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | sed -E 's/.*"tag_name":[[:space:]]*"([^"]+)".*/\1/' || true)"
 
     if [ -z "$latest_tag" ]; then
         warn "Could not determine latest release. Skipping TUI binary."
@@ -183,9 +183,13 @@ download_tui_binary() {
 
     local tmp_dir
     tmp_dir="$(mktemp -d)"
-    trap 'rm -rf "$tmp_dir"' RETURN
+
+    cleanup_tmp() { rm -rf "${tmp_dir:-}" 2>/dev/null || true; }
+    trap cleanup_tmp RETURN
 
     if ! curl -fsSL "$download_url" -o "$tmp_dir/$archive_name" 2>/dev/null; then
+        trap - RETURN
+        cleanup_tmp
         warn "Pre-built TUI binary not available for ${platform}. Skipping."
         warn "You can build from source: cargo build -p sediman-tui"
         return 0
@@ -193,18 +197,24 @@ download_tui_binary() {
 
     tar xzf "$tmp_dir/$archive_name" -C "$tmp_dir" 2>/dev/null || true
 
-    if [ -f "$tmp_dir/terminator" ]; then
-        cp "$tmp_dir/terminator" "$tui_bin"
-    elif [ -f "$tmp_dir/bin/terminator" ]; then
-        cp "$tmp_dir/bin/terminator" "$tui_bin"
-    elif [ -f "$tmp_dir/sediman-tui" ]; then
-        cp "$tmp_dir/sediman-tui" "$tui_bin"
-    elif [ -f "$tmp_dir/bin/sediman-tui" ]; then
-        cp "$tmp_dir/bin/sediman-tui" "$tui_bin"
-    else
+    local found_bin=""
+    for candidate in terminator bin/terminator sediman-tui bin/sediman-tui; do
+        if [ -f "$tmp_dir/$candidate" ]; then
+            found_bin="$tmp_dir/$candidate"
+            break
+        fi
+    done
+
+    if [ -z "$found_bin" ]; then
+        trap - RETURN
+        cleanup_tmp
         warn "TUI binary not found in archive. Skipping."
         return 0
     fi
+
+    cp "$found_bin" "$tui_bin"
+    trap - RETURN
+    cleanup_tmp
 
     chmod +x "$tui_bin"
     info "terminator TUI installed to $tui_bin"
