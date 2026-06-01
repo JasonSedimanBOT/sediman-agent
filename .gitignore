@@ -13,7 +13,7 @@ build/
 .eggs/
 
 .pytest_cache/
-.coverag
+.coverage
 htmlcov/
 .mypy_cache/
 .ruff_cache/
@@ -38,24 +38,14 @@ htmlcov/
 
 # Node.js
 node_modules/
-bun.lock
 
 # Build artifacts
 *.js.map
 *.d.ts.map
 *.tsbuildinfo
 
-# Python
-uv.lock
-
 # Rust
 target/
-Cargo.lock
-
-# Misc
-a.md
-
-app/
 
 # Benchmark suite (not yet published - hidden)
 benchmarks/skill_generalization/mock_server/pages/
@@ -65,4 +55,5 @@ benchmarks/skill_generalization/skills/
 *.benchmark_results.jsonl
 *.benchmark_report.html
 
-paper/
+# Tauri desktop app build artifacts
+app/

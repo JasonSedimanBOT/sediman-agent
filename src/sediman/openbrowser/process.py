@@ -54,7 +54,7 @@ class OpenBrowserProcess:
             raise FileNotFoundError(
                 "open-browser binary not found. Install it with: "
                 "cargo install --path crates/open-cli --features js "
-                "(from the Openbrowser repo)"
+                "(from the vendor/Openbrowser repo)"
             )
 
         cmd = [self._binary, "serve", "--host", self.host, "--port", str(self.port)]

@@ -22,7 +22,7 @@ Teach it once. It repeats forever. 24/7 Slavery.
 ### Install
 
 ```
-curl -fsSL https://raw.githubusercontent.com/sediman-agent/OpenSkynet/main/install | bash
+curl -fsSL https://raw.githubusercontent.com/sediman-agent/OpenSkynet/main/scripts/install.sh | bash
 ```
 
 Then you can run with

@@ -69,7 +69,7 @@ sediman = "sediman.cli:main"
 Homepage = "https://sediman.ai"
 Repository = "https://github.com/sediman-agent/sediman-agent"
 Documentation = "https://github.com/sediman-agent/sediman-agent#readme"
-Changelog = "https://github.com/sediman-agent/sediman-agent/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/sediman-agent/sediman-agent/blob/main/docs/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

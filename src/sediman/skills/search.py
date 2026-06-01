@@ -1,7 +1,7 @@
 """Skill search engine with pre-computed external embeddings and lazy internal indexing.
 
-External skills (from repo skills/) have pre-computed embeddings stored in
-skill_embeddings.npz, committed alongside skills/index.json. Loading is instant
+External skills (from repo skills/data/) have pre-computed embeddings stored in
+skill_embeddings.npz, committed alongside index.json. Loading is instant
 via numpy memory-mapping.
 
 Internal skills (from ~/.sediman/skills/) are lazily indexed on first search.
@@ -30,15 +30,15 @@ def _project_root() -> Path:
 
 
 def _external_index_path() -> Path:
-    return _project_root() / "skills" / "index.json"
+    return _project_root() / "skills" / "data" / "index.json"
 
 
 def _external_embeddings_path() -> Path:
-    return _project_root() / "skills" / "skill_embeddings.npz"
+    return _project_root() / "skills" / "data" / "skill_embeddings.npz"
 
 
 def _external_meta_path() -> Path:
-    return _project_root() / "skills" / "skill_embeddings_meta.json"
+    return _project_root() / "skills" / "data" / "skill_embeddings_meta.json"
 
 
 def _internal_vector_db_path() -> Path:

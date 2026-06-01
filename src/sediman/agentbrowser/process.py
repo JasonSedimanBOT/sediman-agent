@@ -9,7 +9,7 @@ import structlog
 
 logger = structlog.get_logger()
 
-_SOURCE_DIR = Path(__file__).resolve().parent.parent.parent.parent / "Openbrowser" / "ai-agent" / "open-browser"
+_SOURCE_DIR = Path(__file__).resolve().parent.parent.parent.parent / "vendor" / "Openbrowser" / "ai-agent" / "open-browser"
 
 
 class AgentBrowserProcess:
@@ -89,7 +89,7 @@ class AgentBrowserProcess:
         if not binary:
             raise FileNotFoundError(
                 "open-browser-agent not found. "
-                "Install it or ensure node + the Openbrowser/ai-agent source is available."
+                "Install it or ensure node + the vendor/Openbrowser/ai-agent source is available."
             )
 
         if " " in binary:

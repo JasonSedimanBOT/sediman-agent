@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Generate pre-computed embeddings for external skills.
 
-Reads skills/index.json, embeds each skill's name + description,
-and saves the result as skills/skill_embeddings.npz.
+Reads skills/data/index.json, embeds each skill's name + description,
+and saves the result as skills/data/skill_embeddings.npz.
 
-Also enhances skills/index.json with version, stats, scope, and keywords.
+Also enhances skills/data/index.json with version, stats, scope, and keywords.
 
 Incremental: if skill_embeddings.npz already exists, only new/changed skills
 are embedded. Unchanged skills reuse their existing vectors.
@@ -28,9 +28,9 @@ from collections import Counter
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-INDEX_PATH = PROJECT_ROOT / "skills" / "index.json"
-EMBEDDINGS_PATH = PROJECT_ROOT / "skills" / "skill_embeddings.npz"
-EMBEDDINGS_META_PATH = PROJECT_ROOT / "skills" / "skill_embeddings_meta.json"
+INDEX_PATH = PROJECT_ROOT / "skills" / "data" / "index.json"
+EMBEDDINGS_PATH = PROJECT_ROOT / "skills" / "data" / "skill_embeddings.npz"
+EMBEDDINGS_META_PATH = PROJECT_ROOT / "skills" / "data" / "skill_embeddings_meta.json"
 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 

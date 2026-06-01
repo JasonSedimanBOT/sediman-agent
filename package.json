@@ -11,7 +11,7 @@
     "stop": "pkill -f 'sediman.rpc_server' 2>/dev/null; pkill -f 'sediman-tui' 2>/dev/null; rm -f /tmp/sediman-python.sock /tmp/sediman.sock; echo 'Stopped.'",
     "start": "bun run stop && sleep 1 && bun run tui",
     "restart": "bun run stop && sleep 1 && bun run tui",
-    "install-local": "./install",
+    "install-local": "./scripts/install.sh",
     "test": "cargo test -p sediman-tui && uv run pytest"
   }
 }

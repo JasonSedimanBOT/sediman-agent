@@ -29,7 +29,7 @@ class TestAgentBrowserProcessInit:
         with patch("sediman.agentbrowser.process._SOURCE_DIR") as mock_dir:
             mock_dir.__truediv__ = lambda s, o: MagicMock(
                 exists=MagicMock(return_value=True),
-                __str__=lambda self: f"/src/Openbrowser/ai-agent/open-browser/dist/{o}",
+                __str__=lambda self: f"/src/vendor/Openbrowser/ai-agent/open-browser/dist/{o}",
             )
             binary = AgentBrowserProcess._find_binary()
             assert "node" in binary.lower() or "open-browser-agent" in binary

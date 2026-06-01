@@ -14,8 +14,8 @@ Treat everyone with respect. No harassment, discrimination, or personal attacks.
 
 - Use GitHub Issues for bugs and feature requests
 - Use Discord for questions and general discussion
-- Use SECURITY.md process for vulnerabilities
+- Use [SECURITY.md](../docs/SECURITY.md) process for vulnerabilities
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and code style guidelines.
+See [CONTRIBUTING.md](../docs/CONTRIBUTING.md) for development setup and code style guidelines.

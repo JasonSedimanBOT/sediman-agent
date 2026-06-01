@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import top 200 skills from VoltAgent/awesome-openclaw-skills into skills/index.json.
+"""Import top 200 skills from VoltAgent/awesome-openclaw-skills into skills/data/index.json.
 
 Fetches all category markdown files, parses skill entries, ranks by category
 popularity (proportional allocation), deduplicates against existing skills,
@@ -22,7 +22,7 @@ from pathlib import Path
 import httpx
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-INDEX_PATH = PROJECT_ROOT / "skills" / "index.json"
+INDEX_PATH = PROJECT_ROOT / "skills" / "data" / "index.json"
 
 CATEGORIES = [
     "ai-and-llms",
