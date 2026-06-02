@@ -19,7 +19,7 @@ pub async fn handle_sessions(app: &mut App, _args: &str) {
 
 pub static CMD_SESSIONS: Command = Command {
     name: "/sessions",
-    aliases: &["/session"],
+    aliases: &[],
     description: "Browse & manage sessions",
     category: CommandCategory::Sessions,
 };

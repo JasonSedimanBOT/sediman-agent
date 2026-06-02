@@ -33,6 +33,7 @@ pub enum AppModal {
     },
     ModelPicker,
     ProviderPicker,
+    ConnectPicker,
     ApiKeyPrompt,
     MemoryEditor,
     SoulEditor,
@@ -41,11 +42,37 @@ pub enum AppModal {
     SessionBrowser,
     ThemePicker,
     CoderPicker,
+    Doctor {
+        checks: Vec<DoctorCheck>,
+        cursor: usize,
+        scroll: u16,
+        installing: bool,
+        install_output: Vec<String>,
+    },
     Info {
         title: String,
         lines: Vec<ModalLine>,
         scroll: u16,
     },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum DoctorStatus {
+    Pass,
+    Fail,
+    Warn,
+}
+
+#[derive(Clone, Debug)]
+pub struct DoctorCheck {
+    pub category: String,
+    #[allow(dead_code)]
+    pub name: String,
+    pub status: DoctorStatus,
+    pub message: String,
+    #[allow(dead_code)]
+    pub optional: bool,
+    pub install_cmd: Option<String>,
 }
 
 /// A line in an info modal, with optional styling.
@@ -141,6 +168,10 @@ pub struct App {
     pub connect_target: Option<String>,
     pub connect_pending_model: Option<String>,
     pub api_key_input: String,
+    pub connect_is_integration: bool,
+    pub connect_integration_list: Vec<sediman_tui_bridge::IntegrationInfo>,
+    pub connect_picker_idx: usize,
+    pub connect_picker_scroll: usize,
     pub model_list: Vec<sediman_tui_bridge::ModelInfo>,
     // Memory editor state
     pub memory_entries: Vec<(String, String)>, // (target, content)
@@ -322,6 +353,10 @@ impl App {
             connect_target: None,
             connect_pending_model: None,
             api_key_input: String::new(),
+            connect_is_integration: false,
+            connect_integration_list: Vec::new(),
+            connect_picker_idx: 0,
+            connect_picker_scroll: 0,
             model_list: Vec::new(),
             memory_entries: Vec::new(),
             memory_editor_input: String::new(),

@@ -27,6 +27,7 @@ pub async fn handle_provider(app: &mut App, args: &str) {
 
     if needs_key {
         app.connect_target = Some(name);
+        app.connect_is_integration = false;
         app.connect_pending_model = Some(default_model.clone());
         app.api_key_input.clear();
         app.active_modal = Some(crate::app::AppModal::ApiKeyPrompt);
@@ -54,7 +55,7 @@ pub async fn handle_provider(app: &mut App, args: &str) {
 
 pub static CMD_PROVIDER: Command = Command {
     name: "/provider",
-    aliases: &["/connect"],
+    aliases: &[],
     description: "Connect provider & enter API key",
     category: CommandCategory::Agent,
 };

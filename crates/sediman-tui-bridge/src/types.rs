@@ -198,9 +198,9 @@ mod tests {
 
     #[test]
     fn test_session_info() {
-        let json = r#"{"id":42,"task":"my task","created_at":"2024-06-01","result":"done"}"#;
+        let json = r#"{"id":"a1b2c3d4e5f6","task":"my task","created_at":"2024-06-01","result":"done"}"#;
         let s: SessionInfo = serde_json::from_str(json).unwrap();
-        assert_eq!(s.id, 42);
+        assert_eq!(s.id, "a1b2c3d4e5f6");
         assert_eq!(s.result.unwrap(), "done");
     }
 
@@ -237,20 +237,20 @@ mod tests {
     #[test]
     fn test_session_info_with_result() {
         let orig = SessionInfo {
-            id: 42,
+            id: "a1b2c3d4e5f6".into(),
             task: "my task".into(),
             created_at: "2024-06-01".into(),
             result: Some("done".into()),
         };
         let json = serde_json::to_string(&orig).unwrap();
         let restored: SessionInfo = serde_json::from_str(&json).unwrap();
-        assert_eq!(restored.id, 42);
+        assert_eq!(restored.id, "a1b2c3d4e5f6");
         assert_eq!(restored.result, Some("done".into()));
     }
 
     #[test]
     fn test_session_info_no_result() {
-        let json = r#"{"id":7,"task":"pending","created_at":"2024-01-01","result":null}"#;
+        let json = r#"{"id":"f7e8d9c0b1a2","task":"pending","created_at":"2024-01-01","result":null}"#;
         let s: SessionInfo = serde_json::from_str(json).unwrap();
         assert!(s.result.is_none());
     }
@@ -526,9 +526,9 @@ mod tests {
 
     #[test]
     fn test_session_info_null_fields() {
-        let json = r#"{"id":1,"task":null,"created_at":null}"#;
+        let json = r#"{"id":"abc123","task":null,"created_at":null}"#;
         let s: SessionInfo = serde_json::from_str(json).unwrap();
-        assert_eq!(s.id, 1);
+        assert_eq!(s.id, "abc123");
         assert_eq!(s.task, "");
         assert_eq!(s.created_at, "");
         assert!(s.result.is_none());
@@ -536,9 +536,9 @@ mod tests {
 
     #[test]
     fn test_session_info_missing_fields() {
-        let json = r#"{"id":5}"#;
+        let json = r#"{"id":"def456"}"#;
         let s: SessionInfo = serde_json::from_str(json).unwrap();
-        assert_eq!(s.id, 5);
+        assert_eq!(s.id, "def456");
         assert_eq!(s.task, "");
     }
 }
@@ -701,7 +701,7 @@ pub struct SkillSearchResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionInfo {
     #[serde(default)]
-    pub id: i64,
+    pub id: String,
     #[serde(default, deserialize_with = "null_to_default")]
     pub task: String,
     #[serde(default, deserialize_with = "null_to_default")]
