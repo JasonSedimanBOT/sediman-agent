@@ -4,6 +4,12 @@ All notable changes to OpenSkynet will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.12] - 2026-06-02
+
+### Fixed
+
+- Release workflow v2: merged build+package into single per-platform job so `publish-github` starts as soon as any platform finishes (no longer blocked by stuck `x86_64-apple-darwin` runner)
+
 ## [0.2.11] - 2026-06-02
 
 ### Fixed
