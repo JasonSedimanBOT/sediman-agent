@@ -376,6 +376,82 @@ pub fn render_model_dialog(buf: &mut CellBuffer, area: Rect, app: &App) {
     }
 }
 
+pub fn render_connect_picker(buf: &mut CellBuffer, area: Rect, app: &App) {
+    let t = &app.theme;
+    let integrations = &app.connect_integration_list;
+    if integrations.is_empty() {
+        return;
+    }
+
+    const NUM_VISIBLE: usize = 10;
+    let visible = integrations.len().min(NUM_VISIBLE);
+    let modal_w: u16 = (area.width * 50 / 100).clamp(44, 56);
+    let modal_h = (5u16 + visible as u16).min(area.height.saturating_sub(2));
+    let frame = ModalFrame::new(buf, area, app, modal_w, modal_h);
+    let inner_x = frame.inner_x;
+    let inner_w = frame.inner_w;
+
+    draw_rounded_border(buf, frame.modal, Style::new().fg(t.text_muted).bg(t.background));
+
+    buf.draw_str(inner_x, frame.modal.y + 1, "Select Integration",
+        Style::new().fg(t.primary).bg(t.background).add_modifier(TextAttributes::bold()));
+
+    let list_start_y = frame.modal.y + 3;
+    let scroll = app.connect_picker_scroll;
+    let end_idx = (scroll + NUM_VISIBLE).min(integrations.len());
+
+    let mut row = 0usize;
+    for (i, integ) in integrations.iter().enumerate() {
+        if i < scroll || i >= end_idx { continue; }
+        let row_y = list_start_y + row as u16;
+        if row_y >= frame.modal.bottom().saturating_sub(2) { break; }
+
+        let (status_icon, status_label) = if integ.connected {
+            ("\u{25cf}", "connected")
+        } else if integ.configured {
+            ("\u{25cb}", "configured")
+        } else {
+            ("\u{25cb}", "not configured")
+        };
+
+        let cap_name = {
+            let mut c = integ.name.chars();
+            match c.next() {
+                None => String::new(),
+                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+            }
+        };
+        let display = format!(
+            "{} {}    {}",
+            status_icon,
+            truncate_str(&cap_name, inner_w.saturating_sub(20)),
+            status_label
+        );
+
+        let selected = i == app.connect_picker_idx;
+        if selected {
+            for sx in (frame.modal.x + 1)..(frame.modal.right() - 1) {
+                buf.put_char(sx, row_y, ' ', Style::new().bg(t.primary).fg(t.background));
+            }
+            buf.draw_str(inner_x, row_y, &display,
+                Style::new().bg(t.primary).fg(t.background).add_modifier(TextAttributes::bold()));
+        } else {
+            let style = if integ.connected {
+                Style::new().fg(t.text).bg(t.background)
+            } else {
+                Style::new().fg(t.text_muted).bg(t.background)
+            };
+            buf.draw_str(inner_x, row_y, &display, style);
+        }
+        row += 1;
+    }
+
+    let hints_y = frame.modal.bottom().saturating_sub(2);
+    buf.draw_str(frame.modal.x + 2, hints_y,
+        " \u{2191}\u{2193} navigate \u{2502} Enter connect \u{2502} d disconnect \u{2502} Esc close",
+        Style::new().fg(t.text_muted).bg(t.background));
+}
+
 pub fn render_api_key_prompt(buf: &mut CellBuffer, area: Rect, app: &App) {
     let t = &app.theme;
     let target = app.connect_target.as_deref().unwrap_or("unknown");
@@ -390,7 +466,12 @@ pub fn render_api_key_prompt(buf: &mut CellBuffer, area: Rect, app: &App) {
     frame.draw_close_hint(buf, " Esc ", Style::new().fg(t.text_muted).bg(t.background));
 
     let mut y = frame.modal.y + 2;
-    buf.draw_str(inner_x, y, &format!("Enter API key for {}:", target),
+    let label = if app.connect_is_integration {
+        format!("Enter bot token for {}:", target)
+    } else {
+        format!("Enter API key for {}:", target)
+    };
+    buf.draw_str(inner_x, y, &label,
         Style::new().fg(t.text).bg(t.background));
     y += 1;
 
@@ -400,8 +481,9 @@ pub fn render_api_key_prompt(buf: &mut CellBuffer, area: Rect, app: &App) {
     }
     buf.draw_str(inner_x, y, "\u{276f} ", Style::new().fg(t.primary).bg(input_bg));
 
+    let placeholder = if app.connect_is_integration { "bot-token..." } else { "sk-..." };
     if app.api_key_input.is_empty() {
-        buf.draw_str(inner_x + 2, y, "sk-...", Style::new().fg(t.text_muted).bg(input_bg));
+        buf.draw_str(inner_x + 2, y, placeholder, Style::new().fg(t.text_muted).bg(input_bg));
         buf.put_char(inner_x + 2, y, '\u{2588}', Style::new().fg(t.primary).bg(input_bg));
     } else {
         let masked: String = "\u{2022}".repeat(app.api_key_input.len().min(30));

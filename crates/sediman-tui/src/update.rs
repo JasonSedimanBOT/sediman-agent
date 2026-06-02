@@ -251,6 +251,85 @@ pub async fn handle_message(app: &mut App, event: AppEvent, event_tx: &mpsc::Unb
                     }
                 }
 
+                // ConnectPicker — select integration, Enter to enter token, d to disconnect
+                if matches!(app.active_modal, Some(AppModal::ConnectPicker)) {
+                    match key.code {
+                        KeyCode::Esc | KeyCode::Char('q') => {
+                            app.active_modal = None;
+                            return;
+                        }
+                        KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            app.active_modal = None;
+                            return;
+                        }
+                        KeyCode::Up => {
+                            if app.connect_picker_idx > 0 {
+                                app.connect_picker_idx -= 1;
+                            } else {
+                                app.connect_picker_idx = app.connect_integration_list.len().saturating_sub(1);
+                            }
+                            if app.connect_picker_idx < app.connect_picker_scroll {
+                                app.connect_picker_scroll = app.connect_picker_idx;
+                            }
+                            return;
+                        }
+                        KeyCode::Down => {
+                            let max = app.connect_integration_list.len().saturating_sub(1);
+                            if app.connect_picker_idx < max {
+                                app.connect_picker_idx += 1;
+                            } else {
+                                app.connect_picker_idx = 0;
+                                app.connect_picker_scroll = 0;
+                            }
+                            let visible = 10;
+                            if app.connect_picker_idx >= app.connect_picker_scroll + visible {
+                                app.connect_picker_scroll = app.connect_picker_idx - (visible - 1);
+                            }
+                            return;
+                        }
+                        KeyCode::Enter => {
+                            if let Some(integ) = app.connect_integration_list.get(app.connect_picker_idx).cloned() {
+                                let name = integ.name.clone();
+                                app.connect_target = Some(name);
+                                app.connect_is_integration = true;
+                                app.connect_pending_model = None;
+                                app.api_key_input.clear();
+                                app.active_modal = Some(AppModal::ApiKeyPrompt);
+                            }
+                            return;
+                        }
+                        KeyCode::Char('d') => {
+                            if let Some(integ) = app.connect_integration_list.get(app.connect_picker_idx).cloned() {
+                                let name = integ.name.clone();
+                                match app
+                                    .bridge
+                                    .configure_integration(&name, serde_json::json!({"enabled": false}))
+                                    .await
+                                {
+                                    Ok(_) => {
+                                        let cap = {
+                                            let mut c = name.chars();
+                                            match c.next() {
+                                                None => String::new(),
+                                                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                                            }
+                                        };
+                                        app.add_system_message(format!("{} integration disabled.", cap));
+                                    }
+                                    Err(e) => {
+                                        app.add_error_message(format!("Failed to disable {}: {}", name, e));
+                                    }
+                                }
+                                if let Ok(integrations) = app.bridge.list_integrations().await {
+                                    app.connect_integration_list = integrations;
+                                }
+                            }
+                            return;
+                        }
+                        _ => return,
+                    }
+                }
+
                 // CoderPicker — select coder backend
                 if matches!(app.active_modal, Some(AppModal::CoderPicker)) {
                     const CODER_BACKENDS: &[&str] = &["internal", "claude-code", "codex", "opencode"];
@@ -385,12 +464,13 @@ pub async fn handle_message(app: &mut App, event: AppEvent, event_tx: &mpsc::Unb
                     }
                 }
 
-                // ApiKeyPrompt — type API key, Enter to save
+                // ApiKeyPrompt — type API key/token, Enter to save
                 if matches!(app.active_modal, Some(AppModal::ApiKeyPrompt)) {
                     match key.code {
                         KeyCode::Esc => {
                             app.api_key_input.clear();
                             app.connect_target = None;
+                            app.connect_is_integration = false;
                             app.connect_pending_model = None;
                             app.active_modal = None;
                             return;
@@ -398,6 +478,7 @@ pub async fn handle_message(app: &mut App, event: AppEvent, event_tx: &mpsc::Unb
                         KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                             app.api_key_input.clear();
                             app.connect_target = None;
+                            app.connect_is_integration = false;
                             app.connect_pending_model = None;
                             app.active_modal = None;
                             return;
@@ -406,43 +487,72 @@ pub async fn handle_message(app: &mut App, event: AppEvent, event_tx: &mpsc::Unb
                             if !app.api_key_input.is_empty() {
                                 let target = app.connect_target.clone().unwrap_or_default();
                                 let key_val = app.api_key_input.clone();
-                                match app.bridge.auth_set(&target, &key_val).await {
-                                    Ok(()) => {
-                                        let pending_model = app.connect_pending_model.clone();
-                                        let base_url = app
-                                            .available_providers
-                                            .iter()
-                                            .find(|p| p.name == target)
-                                            .and_then(|p| p.default_base_url.clone());
-                                        let model_id = pending_model.as_deref().unwrap_or("default");
-                                        if let Err(e) = app.bridge.switch_model(
-                                            &target,
-                                            Some(model_id),
-                                            base_url.as_deref(),
-                                        ).await {
-                                            app.add_error_message(format!("Key saved but switch failed: {}", e));
-                                        } else {
-                                            app.provider = target.clone();
-                                            app.model = Some(model_id.to_string());
-                                            if let Some(url) = base_url {
-                                                app.base_url = Some(url);
-                                            }
-                                            app.add_system_message(format!("Switched to {}", app.display_model_id()));
+
+                                if app.connect_is_integration {
+                                    match app.bridge.configure_integration(
+                                        &target,
+                                        serde_json::json!({
+                                            "token": key_val,
+                                            "enabled": true,
+                                        }),
+                                    ).await {
+                                        Ok(_) => {
+                                            let cap = {
+                                                let mut c = target.chars();
+                                                match c.next() {
+                                                    None => String::new(),
+                                                    Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                                                }
+                                            };
+                                            app.add_system_message(format!(
+                                                "{} integration enabled. Bot will start on next task.",
+                                                cap
+                                            ));
                                         }
-                                        if let Ok(providers) = app.bridge.list_providers().await {
-                                            app.available_providers = providers;
-                                        }
-                                        if let Ok(models) = app.bridge.list_models(None).await {
-                                            app.model_list = models;
+                                        Err(e) => {
+                                            app.add_error_message(format!("Failed to configure {}: {}", target, e));
                                         }
                                     }
-                                    Err(e) => {
-                                        app.add_error_message(format!("Failed to save key: {}", e));
+                                } else {
+                                    match app.bridge.auth_set(&target, &key_val).await {
+                                        Ok(()) => {
+                                            let pending_model = app.connect_pending_model.clone();
+                                            let base_url = app
+                                                .available_providers
+                                                .iter()
+                                                .find(|p| p.name == target)
+                                                .and_then(|p| p.default_base_url.clone());
+                                            let model_id = pending_model.as_deref().unwrap_or("default");
+                                            if let Err(e) = app.bridge.switch_model(
+                                                &target,
+                                                Some(model_id),
+                                                base_url.as_deref(),
+                                            ).await {
+                                                app.add_error_message(format!("Key saved but switch failed: {}", e));
+                                            } else {
+                                                app.provider = target.clone();
+                                                app.model = Some(model_id.to_string());
+                                                if let Some(url) = base_url {
+                                                    app.base_url = Some(url);
+                                                }
+                                                app.add_system_message(format!("Switched to {}", app.display_model_id()));
+                                            }
+                                            if let Ok(providers) = app.bridge.list_providers().await {
+                                                app.available_providers = providers;
+                                            }
+                                            if let Ok(models) = app.bridge.list_models(None).await {
+                                                app.model_list = models;
+                                            }
+                                        }
+                                        Err(e) => {
+                                            app.add_error_message(format!("Failed to save key: {}", e));
+                                        }
                                     }
                                 }
                             }
                             app.api_key_input.clear();
                             app.connect_target = None;
+                            app.connect_is_integration = false;
                             app.connect_pending_model = None;
                             app.model_dialog_filter.clear();
                             app.active_modal = None;
