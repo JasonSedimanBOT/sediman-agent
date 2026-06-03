@@ -227,8 +227,8 @@ fn render_message(msg: &ChatMessage, lines: &mut Vec<MessageLine>, app: &App, ma
                     ("○", app.theme.info)
                 };
 
-                let status = if *steps_expanded { "Collapsed" } else { "Expand" };
-                let label = format!("{} {} steps ({} to {})", icon, step_count, status, if *steps_expanded { "expand" } else { "collapse" });
+                let action = if *steps_expanded { "Collapse" } else { "Expand" };
+                let label = format!("{} {} steps (click Space to {})", icon, step_count, action.to_lowercase());
                 lines.push(MessageLine::collapsible(label, *steps_expanded, Style::new().fg(color)));
 
                 // ── Show steps if expanded (last 3 to keep it clean) ──

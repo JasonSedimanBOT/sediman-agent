@@ -450,8 +450,9 @@ impl App {
         self.step_log.clear();
         self.step_log.push(format!("Task: {}", task));
         self.streaming_text.clear();
+        self.streaming_phase.clear();
         self.messages.push(ChatMessage::Agent {
-            steps: Vec::new(),
+            steps: Vec::new(),  // Always start with empty steps
             result: None,
             success: false,
             elapsed_secs: 0,

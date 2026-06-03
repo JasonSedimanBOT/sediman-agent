@@ -112,7 +112,11 @@ pub async fn handle_message(app: &mut App, event: AppEvent, event_tx: &mpsc::Unb
             app.running = false;
         }
         AppEvent::AgentStep(_phase, action) => {
-            app.append_step(action);
+            // Only append steps if agent is currently running
+            // This prevents steps from previous task appearing in new task
+            if app.agent_running {
+                app.append_step(action);
+            }
         }
         AppEvent::AgentResult(success, result_text, elapsed_secs) => {
             let skill_created = None;
@@ -134,7 +138,11 @@ pub async fn handle_message(app: &mut App, event: AppEvent, event_tx: &mpsc::Unb
             app.add_system_message(text);
         }
         AppEvent::StreamingToken(token, phase) => {
-            app.append_streaming_token(&token, &phase);
+            // Only append streaming tokens if agent is currently running
+            // This prevents streaming text from previous task appearing in new task
+            if app.agent_running {
+                app.append_streaming_token(&token, &phase);
+            }
         }
     }
 }

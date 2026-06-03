@@ -1636,15 +1636,16 @@ class AgentLoop:
         """Generate a conversational response when the plan doesn't provide one."""
         import asyncio
         try:
+            system_msg = "You are Terminator, a helpful AI browser automation agent powered by OpenSkynet. Always respond conversationally and naturally. Be concise but friendly - never leave a response empty or blank. If the user sends a greeting, acknowledge it warmly. If they thank you, respond politely. If they send an acknowledgment like 'good' or 'ok', ask how you can help next. Keep responses under 2 sentences unless more detail is needed."
             messages = [
-                {"role": "system", "content": "You are Sediman, a helpful browser automation agent. Respond conversationally and naturally to the user's message. Be concise and friendly. If the user asks about your capabilities, explain you can help with browser automation, web scraping, and web-based tasks."},
+                {"role": "system", "content": system_msg},
                 {"role": "user", "content": task},
             ]
             # Include recent conversation context for continuity
             if conversation and len(conversation) > 0:
                 recent_convo = conversation[-6:]  # Last 3 exchanges
                 messages = [
-                    {"role": "system", "content": "You are Sediman, a helpful browser automation agent. Respond conversationally and naturally to the user's message. Be concise and friendly. If the user asks about your capabilities, explain you can help with browser automation, web scraping, and web-based tasks."},
+                    {"role": "system", "content": system_msg},
                 ]
                 messages.extend(recent_convo)
                 messages.append({"role": "user", "content": task})
@@ -1653,7 +1654,11 @@ class AgentLoop:
                 self.llm.chat(messages=messages, tools=[]),
                 timeout=10.0
             )
-            return response.text or "I'm here to help! What can I assist you with today?"
+            # Ensure we always return a non-empty response
+            result_text = response.text or "I'm here to help! What can I assist you with today?"
+            if not result_text.strip():
+                return "I'm here and ready to help! What would you like me to do?"
+            return result_text
         except (asyncio.TimeoutError, Exception) as e:
             logger.debug("conversational_response_failed", error=str(e))
             # Provide contextual fallbacks based on the task
@@ -1664,8 +1669,20 @@ class AgentLoop:
                 return "I'm doing well, thanks for asking! I'm ready to help with any browser automation or web-based tasks you have."
             elif any(q in task_lower for q in ["what can you do", "help me", "capabilities"]):
                 return "I can help with browser automation, web scraping, filling forms, clicking buttons, extracting data from websites, and more. Just tell me what you need!"
-            elif "thank" in task_lower:
+            elif "thank" in task_lower or "thanks" in task_lower:
                 return "You're welcome! Let me know if you need anything else."
+            elif any(ack in task_lower for ack in ["good", "great", "ok", "okay", "nice", "cool", "perfect", "excellent"]):
+                # Acknowledgment responses
+                if len(task_lower) < 10:  # Single word acknowledgment
+                    return "Great! Is there anything specific you'd like me to help you with?"
+                else:
+                    return f"Thanks for letting me know! How can I assist you further?"
+            elif any(ack in task_lower for ack in ["yes", "yeah", "yep", "sure", "alright", "right"]):
+                return "Got it! What would you like me to do?"
+            elif any(ack in task_lower for ack in ["no", "nope", "nah"]):
+                return "No problem. Let me know if there's anything else I can help with."
+            elif task_lower.strip() == "." or task_lower.strip() == "..":
+                return "I'm here and ready to help! What would you like me to do?"
             else:
                 return f"I understand you're asking about: \"{task}\". Could you provide more details about what you'd like me to help you with?"
 
