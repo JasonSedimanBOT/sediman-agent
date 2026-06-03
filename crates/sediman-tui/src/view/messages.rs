@@ -76,19 +76,19 @@ pub fn render_messages(buf: &mut CellBuffer, area: Rect, app: &mut App) {
         if !app.streaming_text.is_empty() {
             lines.push(MessageLine::empty());
 
-            let label = match app.streaming_phase.as_str() {
-                "planning" | "thinking" => "◆ Thinking",
-                "responding" => "▶ Responding",
-                "executing" => "▸ Executing",
-                "result" => "◇ Result",
-                _ => "▶ Streaming",
+            let (label, label_color, content_color) = match app.streaming_phase.as_str() {
+                "planning" | "thinking" => ("◆ Thinking", app.theme.warning, app.theme.text_muted),
+                "responding" => ("▶ Responding", app.theme.info, app.theme.text),
+                "executing" => ("▸ Executing", app.theme.primary, app.theme.text),
+                "result" => ("◇ Result", app.theme.success, app.theme.text),
+                _ => ("▶ Streaming", app.theme.info, app.theme.text),
             };
             lines.push(MessageLine::text(
                 format!("    {}", label),
-                Style::new().fg(app.theme.info).add_modifier(TextAttributes::bold()),
+                Style::new().fg(label_color).add_modifier(TextAttributes::bold()),
             ));
 
-            // Show last N lines of streaming text
+            // Show last N lines of streaming text with muted color for thinking
             let preview_lines: Vec<&str> = app.streaming_text.lines().rev().take(15).collect();
             let preview_lines: Vec<&str> = preview_lines.into_iter().rev().collect();
 
@@ -96,7 +96,7 @@ pub fn render_messages(buf: &mut CellBuffer, area: Rect, app: &mut App) {
                 let is_last = i == preview_lines.len() - 1;
                 let cursor = if is_last { "█" } else { "" };
                 push_wrapped(&mut lines, &format!("    {}{}", text_line, cursor),
-                    Style::new().fg(app.theme.text), max_width);
+                    Style::new().fg(content_color), max_width);
             }
         }
     }
